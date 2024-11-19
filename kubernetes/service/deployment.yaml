@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: maple-project-deployment
+  namespace: maple-system
+  labels:
+    app: maple-project
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: maple-project
+  template:
+    metadata:
+      labels:
+        app: maple-project
+    spec:
+      containers:
+        - name: maple-project-container
+          image: shobhittyagi1011/maple-project-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          env:
+            - name: DB_URI
+              value: jdbc:postgresql://maple-project-postgres-service:5403/maple-project
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: maple-project-secrets
+                  key: POSTGRES_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: maple-project-secrets
+                  key: POSTGRES_PASSWORD
+
+        - name: envoy
+          image: envoyproxy/envoy:v1.27.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9901
+            - containerPort: 8081
+          volumeMounts:
+            - name: maple-project-envoy-config
+              mountPath: /etc/envoy
+          args:
+            - "--config-path"
+            - "/etc/envoy/envoy.yaml"
+
+      volumes:
+        - name: maple-project-envoy-config
+          configMap:
+            name: maple-project-envoy-config
