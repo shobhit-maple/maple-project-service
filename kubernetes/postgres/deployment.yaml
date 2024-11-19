@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: maple-project-postgres
+  namespace: maple-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: maple-project-postgres
+  template:
+    metadata:
+      labels:
+        app: maple-project-postgres
+    spec:
+      containers:
+        - name: maple-project-postgres
+          image: postgres:14.1-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: maple-project-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: maple-project-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              value: maple-project
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: maple-project-postgres-storage
+      volumes:
+        - name: maple-project-postgres-storage
+          emptyDir: {}

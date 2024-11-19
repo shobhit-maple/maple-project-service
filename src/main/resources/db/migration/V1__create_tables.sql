@@ -1,0 +1,7 @@
+CREATE TABLE project (
+  id VARCHAR(255) PRIMARY KEY NOT NULL,
+  name VARCHAR(255) NOT NULL UNIQUE,
+  description VARCHAR(255),
+  organization_id VARCHAR(255) NOT NULL,
+  type VARCHAR(100) NOT NULL
+);
